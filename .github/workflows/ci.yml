@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Compile Python scripts
+        run: |
+          python -m py_compile \
+            scripts/run_feishu_local_export.py \
+            scripts/build_full_live_v2.py \
+            scripts/audit_v2_content_completeness.py
+
+      - name: Check Node script syntax
+        run: |
+          node --check scripts/export_feishu_full_live.mjs
+          node --check scripts/export_feishu_live_structured_html.mjs
+          node --check scripts/export_full_clientvar_sequence.mjs
+          node --check scripts/export_missing_intro_sections_from_clientvars.mjs
+          node --check scripts/verify_v2_sections_in_chrome_cdp.mjs
+
+      - name: Check CLI help
+        run: python3 scripts/run_feishu_local_export.py --help
