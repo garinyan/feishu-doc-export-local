@@ -53,6 +53,7 @@ This project optimizes for content completeness first, then offline readability.
 ## Repository Layout
 
 - `AGENTS.md`: generic agent workflow instructions
+- `AGENTS-zh.md`: 中文版通用 agent 工作流说明
 - `CLAUDE.md`: Claude Code oriented entry notes
 - `SKILL.md`: Codex/OpenAI skill entry instructions
 - `agents/openai.yaml`: OpenAI skill metadata
@@ -64,9 +65,10 @@ This project optimizes for content completeness first, then offline readability.
 
 1. 先看 `README.md`
 2. 再看 `AGENTS.md`
-3. 如果在 Codex/OpenAI 环境下使用，再看 `SKILL.md`
-4. 需要复盘时看 `references/retrospective.md`
-5. 需要执行交付前检查时看 `references/checklist.md`
+3. 如果更习惯中文，再看 `AGENTS-zh.md`
+4. 如果在 Codex/OpenAI 环境下使用，再看 `SKILL.md`
+5. 需要复盘时看 `references/retrospective.md`
+6. 需要执行交付前检查时看 `references/checklist.md`
 
 ## Use In Any Agent Tool
 
@@ -75,10 +77,11 @@ This repository is no longer tied to Codex only.
 If your tool supports repository-scoped instruction files, start from:
 
 - `AGENTS.md` for generic agent tools
+- `AGENTS-zh.md` for generic agent tools in Chinese
 - `CLAUDE.md` for Claude Code
 - `SKILL.md` for Codex/OpenAI skill environments
 
-If your tool does not support automatic instruction loading, point it at `AGENTS.md` and ask it to follow the workflow there.
+If your tool does not support automatic instruction loading, point it at `AGENTS.md` or `AGENTS-zh.md` and ask it to follow the workflow there.
 
 ## Use As A Codex Skill
 
@@ -107,14 +110,30 @@ Example prompt:
 Use the workflow in AGENTS.md to export this Feishu document into a local HTML package with localized images and a completeness audit.
 ```
 
+中文提示词也可以直接写成：
+
+```text
+请按照 AGENTS-zh.md 里的流程，把这个飞书文档导出为本地 HTML 包，并输出完整性审计结果。
+```
+
 ## Use In Other Agent Tools
 
 For Cursor agents, Goose, Aider-style wrappers, or custom internal agents:
 
 1. Open this repository as the working directory.
-2. Provide `AGENTS.md` as the workflow instruction file.
+2. Provide `AGENTS.md` or `AGENTS-zh.md` as the workflow instruction file.
 3. Ask the agent to run `python3 scripts/run_feishu_local_export.py --url '...'`.
 4. If completeness matters, ask it to report the audit result and image-load verification explicitly.
+
+## CI
+
+This repository includes a GitHub Actions workflow at `.github/workflows/ci.yml`.
+
+It currently checks:
+
+- Python script compilation
+- Node script syntax
+- CLI help output
 
 ## Requirements
 
