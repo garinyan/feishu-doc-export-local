@@ -123,25 +123,16 @@ Basic:
 
 ```bash
 python3 scripts/run_feishu_local_export.py \
-  --url 'https://example.com/docx/...'
+  --url 'https://example.invalid/embedded-feishu-link'
 ```
 
 With known folded headings to verify:
 
 ```bash
 python3 scripts/run_feishu_local_export.py \
-  --url 'https://example.com/docx/...' \
-  --section 'Section A' \
-  --section 'Section B'
-```
-
-更接近真实使用的中文示例：
-
-```bash
-python3 scripts/run_feishu_local_export.py \
-  --url 'https://example.com/docx/...' \
-  --section '一） AI 编程：生产力跃迁已经发生' \
-  --section '二） 出海：唯一可复制的增长曲线'
+  --url 'https://example.invalid/embedded-feishu-link' \
+  --section 'Heading One' \
+  --section 'Heading Two'
 ```
 
 运行后会依次做这些事：

@@ -26,7 +26,7 @@ Preferred single entrypoint:
 
 - Use `scripts/run_feishu_local_export.py` from this skill when possible.
 - Example:
-  - `python3 scripts/run_feishu_local_export.py --url 'https://example.com/docx/...' --section 'Section A' --section 'Section B'`
+  - `python3 scripts/run_feishu_local_export.py --url 'https://example.invalid/embedded-feishu-link' --section 'Heading One' --section 'Heading Two'`
 
 1. Use the user’s live Chrome tab via CDP.
 - Ask the user to start Chrome with `--remote-debugging-port=9222` only if needed.
