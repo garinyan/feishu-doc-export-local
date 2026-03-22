@@ -5,6 +5,8 @@ description: Export a Feishu/Lark doc or Feishu-wrapped doc to a local readable 
 
 # Feishu Doc Export Local
 
+This file is the Codex/OpenAI adapter for the repository. The tool-agnostic workflow lives in `AGENTS.md`.
+
 ## Use This Skill When
 
 - The user wants to export a Feishu/Lark doc to a local file.

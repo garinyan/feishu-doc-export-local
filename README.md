@@ -6,7 +6,7 @@ Export a Feishu/Lark doc, or a Feishu doc wrapped by another site, into a local 
 
 这个项目用于把飞书文档，或者被第三方页面包裹的飞书文档，尽最大努力导出为本地可读 HTML，并补齐本地图片资源，同时给出一份“内容完整性审计”结果。它优先解决“内容不要丢”，其次解决“离线可读”，不把 `MHTML`、打印 PDF、原始 DOM 快照这种看起来省事但实际不稳定的路线当主方案。
 
-This repository contains a Codex skill plus the scripts that proved most reliable in practice:
+This repository contains a reusable agent workflow package plus the scripts that proved most reliable in practice:
 
 - use the user's already-loaded Chrome tab via CDP
 - read Feishu runtime chunk data from `docxClientvarFetchManager`
@@ -52,8 +52,10 @@ This project optimizes for content completeness first, then offline readability.
 
 ## Repository Layout
 
-- `SKILL.md`: Codex skill entry instructions
-- `agents/openai.yaml`: skill metadata
+- `AGENTS.md`: generic agent workflow instructions
+- `CLAUDE.md`: Claude Code oriented entry notes
+- `SKILL.md`: Codex/OpenAI skill entry instructions
+- `agents/openai.yaml`: OpenAI skill metadata
 - `references/`: checklist and retrospective
 - `scripts/`: export, build, audit, and verification scripts
 - `exports/`: generated outputs, ignored by git
@@ -61,9 +63,22 @@ This project optimizes for content completeness first, then offline readability.
 建议阅读顺序：
 
 1. 先看 `README.md`
-2. 再看 `SKILL.md`
-3. 需要复盘时看 `references/retrospective.md`
-4. 需要执行交付前检查时看 `references/checklist.md`
+2. 再看 `AGENTS.md`
+3. 如果在 Codex/OpenAI 环境下使用，再看 `SKILL.md`
+4. 需要复盘时看 `references/retrospective.md`
+5. 需要执行交付前检查时看 `references/checklist.md`
+
+## Use In Any Agent Tool
+
+This repository is no longer tied to Codex only.
+
+If your tool supports repository-scoped instruction files, start from:
+
+- `AGENTS.md` for generic agent tools
+- `CLAUDE.md` for Claude Code
+- `SKILL.md` for Codex/OpenAI skill environments
+
+If your tool does not support automatic instruction loading, point it at `AGENTS.md` and ask it to follow the workflow there.
 
 ## Use As A Codex Skill
 
@@ -81,6 +96,25 @@ Use $feishu-doc-export-local to export this Feishu doc.
 ```
 
 如果你已经在本机用了这个 skill，推荐直接把 `~/.codex/skills/feishu-doc-export-local` 指到这个仓库，这样仓库更新和 skill 更新会保持一致。
+
+## Use In Claude Code
+
+Open this repository in Claude Code and ask it to follow [AGENTS.md](AGENTS.md) or [CLAUDE.md](CLAUDE.md).
+
+Example prompt:
+
+```text
+Use the workflow in AGENTS.md to export this Feishu document into a local HTML package with localized images and a completeness audit.
+```
+
+## Use In Other Agent Tools
+
+For Cursor agents, Goose, Aider-style wrappers, or custom internal agents:
+
+1. Open this repository as the working directory.
+2. Provide `AGENTS.md` as the workflow instruction file.
+3. Ask the agent to run `python3 scripts/run_feishu_local_export.py --url '...'`.
+4. If completeness matters, ask it to report the audit result and image-load verification explicitly.
 
 ## Requirements
 

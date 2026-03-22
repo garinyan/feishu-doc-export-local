@@ -38,6 +38,7 @@ open -na "Google Chrome" --args \
 ## Coding Guidelines
 
 - Keep scripts portable. Do not introduce machine-specific absolute paths.
+- Keep workflow docs tool-agnostic unless a file is intentionally adapter-specific, such as `SKILL.md` or `CLAUDE.md`.
 - Prefer content completeness over superficial visual parity.
 - Keep generated outputs under `exports/`; do not commit them.
 - Preserve the distinction between:
