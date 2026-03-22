@@ -33,6 +33,14 @@ const result = await frame.evaluate(() => {
     if (typeof value === 'object') return Object.values(value).join('');
     return '';
   };
+  const readCaption = (block) => {
+    const value = block?.data?.caption?.text?.initialAttributedTexts?.text;
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.join('');
+    if (typeof value === 'object') return Object.values(value).join('');
+    return '';
+  };
   const items = [];
   for (const key of orderedKeys) {
     const payload = manager._clientvarMap.get(key);
@@ -43,13 +51,25 @@ const result = await frame.evaluate(() => {
       seen.add(id);
       const block = bm[id];
       if (!block) continue;
+      const file = block?.data?.file || {};
       items.push({
         id,
         type: block?.data?.type || '',
         text: readText(block),
+        caption: readCaption(block),
         parent_id: block?.data?.parent_id || '',
         children: block?.data?.children || [],
         folded: Boolean(block?.data?.folded),
+        view_type: block?.data?.view_type || '',
+        file_name: file?.name || '',
+        mimeType: file?.mimeType || '',
+        token: file?.token || block?.data?.token || '',
+        size: file?.size || 0,
+        width: file?.width || block?.data?.width || 0,
+        height: file?.height || block?.data?.height || 0,
+        originWidth: file?.originWidth || 0,
+        originHeight: file?.originHeight || 0,
+        manifest: block?.data?.manifest || null,
         sourceKey: key,
       });
     }

@@ -30,6 +30,8 @@
 - Copy or localize all image assets.
 - Preserve special blocks where possible.
 - Replace non-exportable interactive embeds with static cards instead of dropping them.
+- Build explicit material cards for file/view/isv/whiteboard blocks instead of letting them disappear.
+- Link local attachment assets from the final HTML when local preview or fallback files exist.
 
 ## Audit
 
@@ -41,11 +43,16 @@
 - Navigate to missing-image sections through the catalogue or headings and retry localization.
 - For virtualized sections, scan inside the section placeholder after jumping to the nearest heading.
 - Use section screenshots only after direct live-image backfill has failed.
+- Run a separate material audit for attachment units.
+- Check `file`, `view`, `isv`, and `whiteboard` blocks explicitly.
+- Confirm PPT, video, HTML attachments, whiteboards, and interactive cards are either localized or represented by metadata cards with links.
 
 ## Browser Verification
 
 - Open the local HTML in Chrome.
 - Confirm all images load.
+- Confirm material cards are populated.
+- Confirm local attachment links exist for exported assets.
 - Confirm the user’s key sections exist and have body content.
 - Confirm navigation is populated.
 - If screenshots were needed as fallback, confirm they are linked or bundled clearly.

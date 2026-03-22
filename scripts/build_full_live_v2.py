@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 from bs4 import BeautifulSoup, Tag
@@ -38,6 +39,8 @@ structured_html = (STRUCTURED_DIR / "document-structured.html").read_text()
 structured = BeautifulSoup(structured_html, "lxml")
 images_dir = FULL_DIR / "images"
 image_files = {p.stem: p.name for p in images_dir.iterdir() if p.is_file()}
+assets_dir = OUT_DIR / "assets"
+asset_files = [p for p in assets_dir.iterdir() if p.is_file()] if assets_dir.exists() else []
 missing_sections_path = WORK_DIR / "missing-intro-sections.json"
 missing_sections = (
     {}
@@ -46,6 +49,61 @@ missing_sections = (
     if missing_sections_path.exists()
     else {}
 )
+
+
+def normalize_asset_name(value: str) -> str:
+    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", (value or "").lower())
+
+
+def format_bytes(size: int | float | None) -> str:
+    size = int(size or 0)
+    if size <= 0:
+        return ""
+    units = ["B", "KB", "MB", "GB"]
+    value = float(size)
+    unit = 0
+    while value >= 1024 and unit < len(units) - 1:
+        value /= 1024
+        unit += 1
+    if unit == 0:
+        return f"{int(value)}{units[unit]}"
+    return f"{value:.2f}{units[unit]}"
+
+
+def infer_label(mime_type: str, file_name: str) -> str:
+    name = (file_name or "").lower()
+    mime = (mime_type or "").lower()
+    if mime.startswith("video/") or name.endswith((".mp4", ".mov", ".webm", ".m4v")):
+        return "视频附件"
+    if "presentation" in mime or name.endswith((".ppt", ".pptx", ".key")):
+        return "PPT附件"
+    if name.endswith(".html") or "text/html" in mime:
+        return "HTML附件"
+    return "文件附件"
+
+
+def guess_asset(file_name: str) -> str:
+    if not file_name:
+        return ""
+    norm = normalize_asset_name(Path(file_name).stem)
+    candidates: list[tuple[int, str]] = []
+    for asset in asset_files:
+        asset_norm = normalize_asset_name(asset.stem.replace("-preview", ""))
+        score = 0
+        if asset.name == file_name:
+            score += 100
+        if asset.stem == Path(file_name).stem:
+            score += 90
+        if asset_norm == norm:
+            score += 80
+        if norm and norm in asset_norm:
+            score += 60
+        if asset_norm and asset_norm in norm:
+            score += 50
+        if score:
+            candidates.append((score, asset.name))
+    candidates.sort(reverse=True)
+    return candidates[0][1] if candidates else ""
 
 
 def is_block(tag: Tag) -> bool:
@@ -58,6 +116,24 @@ image_blocks: dict[str, str] = {}
 grid_insertions: dict[str, dict] = {}
 embed_blocks: dict[str, str] = {}
 embed_skip_children: dict[str, list[str]] = {}
+structured_iframe_src: dict[str, str] = {}
+
+block_by_id = {block.get("id"): block for block in blocks if block.get("id")}
+heading_path: dict[str, str] = {}
+heading_stack: list[str] = []
+for item in blocks:
+    block_id = item.get("id")
+    block_type = item.get("type") or ""
+    text = (item.get("text") or "").strip()
+    if block_type.startswith("heading") and text:
+        try:
+            level = int(block_type[-1])
+        except ValueError:
+            level = 1
+        heading_stack = heading_stack[: max(level - 1, 0)]
+        heading_stack.append(text)
+    if block_id:
+        heading_path[block_id] = " > ".join(heading_stack)
 
 for tag in structured.find_all(attrs={"data-record-id": True, "data-block-type": True}):
     if not is_block(tag):
@@ -92,30 +168,11 @@ for tag in structured.find_all(attrs={"data-record-id": True, "data-block-type":
             anchor_id = content_ids[0] if content_ids else (child_ids[0] if child_ids else None)
             if anchor_id:
                 grid_insertions[anchor_id] = {"grid_id": block_id, "child_ids": child_ids}
-    elif block_type in {"view", "file", "isv"}:
-        texts = [
-            t.strip()
-            for t in tag.stripped_strings
-            if t.strip() and t.strip() not in {"\u200b", "Unable to print"}
-        ]
-        if block_type in {"view", "file"}:
-            filename = next((t for t in reversed(texts) if "." in t and len(t) < 120), "")
-            if not filename:
-                filename = next((t for t in reversed(texts) if len(t) < 120 and not any(ch in t for ch in "/:")), "")
-            duration = next((t for t in reversed(texts) if ":" in t and len(t) <= 8), "")
-            label = "视频附件" if filename.endswith(".mp4") else "文件附件"
-            parts = [f"<strong>{label}</strong>"]
-            if filename:
-                parts.append(f"<div class=\"embed-file-name\">{esc(filename)}</div>")
-            if duration:
-                parts.append(f"<div class=\"embed-file-meta\">时长 {esc(duration)}</div>")
-            embed_blocks[block_id] = f"<section class=\"embed-card embed-{block_type}\">{''.join(parts)}</section>"
-            if block_type == "view" and tag.get("data-record-id"):
-                child_file = tag.find(attrs={"data-block-type": "file", "data-record-id": True})
-                if child_file:
-                    embed_skip_children[block_id] = [child_file.get("data-record-id")]
-        else:
-            embed_blocks[block_id] = "<section class=\"embed-card embed-isv\"><strong>嵌入式互动卡片</strong><div class=\"embed-file-meta\">原网页为第三方交互组件，本地版保留占位。</div></section>"
+    elif block_type in {"view", "isv", "whiteboard"}:
+        if block_type == "isv":
+            iframe = tag.find("iframe")
+            if iframe and iframe.get("src"):
+                structured_iframe_src[block_id] = iframe.get("src")
     elif block_type == "image":
         cloned = BeautifulSoup(str(tag), "lxml")
         node = cloned.find(attrs={"data-record-id": block_id})
@@ -129,6 +186,129 @@ for tag in structured.find_all(attrs={"data-record-id": True, "data-block-type":
             img.attrs.pop("srcset", None)
             img["src"] = f"./images/{image_files[block_id]}"
         image_blocks[block_id] = str(node)
+
+
+material_manifest: list[dict] = []
+
+
+def build_material_card(block: dict) -> str:
+    block_id = block["id"]
+    block_type = block.get("type") or ""
+    entry: dict = {
+        "id": block_id,
+        "type": block_type,
+        "heading_path": heading_path.get(block_id, ""),
+        "represented_in_html": True,
+    }
+    body_parts: list[str] = []
+    attrs = [f'data-material-id="{esc(block_id)}"', f'data-material-type="{esc(block_type)}"']
+
+    if block_type == "view":
+        child_id = next((cid for cid in block.get("children") or [] if cid in block_by_id), "")
+        child = block_by_id.get(child_id, {})
+        if not child_id or not child.get("file_name"):
+            child = next(
+                (
+                    item
+                    for item in blocks
+                    if item.get("parent_id") == block_id and item.get("type") == "file"
+                ),
+                child,
+            )
+            child_id = child.get("id") or child_id
+        file_name = child.get("file_name") or ""
+        mime_type = child.get("mimeType") or ""
+        asset_name = guess_asset(file_name)
+        label = infer_label(mime_type, file_name)
+        entry.update(
+            {
+                "child_file_id": child_id,
+                "file_name": file_name,
+                "mimeType": mime_type,
+                "token": child.get("token") or "",
+                "size": child.get("size") or 0,
+                "asset_name": asset_name,
+                "asset_status": "linked" if asset_name else "missing",
+                "label": label,
+            }
+        )
+        body_parts.append(f"<strong>{esc(label)}</strong>")
+        if file_name:
+            body_parts.append(f'<div class="embed-file-name">{esc(file_name)}</div>')
+        meta_parts = []
+        if child.get("size"):
+            meta_parts.append(format_bytes(child.get("size")))
+        if mime_type:
+            meta_parts.append(mime_type)
+        if heading_path.get(block_id):
+            meta_parts.append(f"位置：{heading_path.get(block_id)}")
+        if meta_parts:
+            body_parts.append(f'<div class="embed-file-meta">{" · ".join(esc(x) for x in meta_parts if x)}</div>')
+        if asset_name:
+            rel = f"./assets/{asset_name}"
+            asset_suffix = Path(asset_name).suffix.lower()
+            body_parts.append(f'<div class="embed-links"><a href="{rel}">打开本地附件</a></div>')
+            if asset_suffix in {".webm", ".mp4", ".mov", ".m4v"}:
+                body_parts.append(f'<video class="local-video" controls preload="metadata" src="{rel}"></video>')
+            elif asset_suffix == ".pdf":
+                body_parts.append(f'<div class="embed-file-meta">已导出为本地 PDF 预览版本。</div>')
+            elif asset_suffix in {".html", ".htm"}:
+                body_parts.append(f'<div class="embed-file-meta">已导出为本地 HTML 预览版本。</div>')
+        else:
+            body_parts.append('<div class="embed-file-meta">未找到本地资产文件，保留附件元数据。</div>')
+        material_manifest.append(entry)
+        if child_id:
+            embed_skip_children[block_id] = [child_id]
+        return f'<section class="embed-card embed-view" {" ".join(attrs)}>{"".join(body_parts)}</section>'
+
+    if block_type == "isv":
+        iframe_src = structured_iframe_src.get(block_id, "")
+        manifest = block.get("manifest") or {}
+        entry.update(
+            {
+                "asset_name": "",
+                "asset_status": "metadata_only",
+                "iframe_src": iframe_src,
+                "manifest": manifest,
+            }
+        )
+        body_parts.append("<strong>嵌入式互动卡片</strong>")
+        if heading_path.get(block_id):
+            body_parts.append(f'<div class="embed-file-meta">位置：{esc(heading_path.get(block_id))}</div>')
+        if iframe_src:
+            body_parts.append(f'<div class="embed-links"><a href="{esc(iframe_src)}">打开原始互动页面</a></div>')
+        else:
+            body_parts.append('<div class="embed-file-meta">未提取到独立互动链接，保留组件元数据。</div>')
+        material_manifest.append(entry)
+        return f'<section class="embed-card embed-isv" {" ".join(attrs)}>{"".join(body_parts)}</section>'
+
+    if block_type == "whiteboard":
+        entry.update(
+            {
+                "asset_name": "",
+                "asset_status": "metadata_only",
+                "token": block.get("token") or "",
+                "caption": block.get("caption") or "",
+            }
+        )
+        body_parts.append("<strong>白板附件</strong>")
+        if heading_path.get(block_id):
+            body_parts.append(f'<div class="embed-file-meta">位置：{esc(heading_path.get(block_id))}</div>')
+        body_parts.append('<div class="embed-file-meta">当前导出保留白板元数据，尚未发现稳定的离线原始导出链路。</div>')
+        material_manifest.append(entry)
+        return f'<section class="embed-card embed-whiteboard" {" ".join(attrs)}>{"".join(body_parts)}</section>'
+
+    return ""
+
+
+for block in blocks:
+    block_id = block.get("id")
+    if not block_id:
+        continue
+    if block.get("type") in {"view", "isv", "whiteboard"} and block_id not in embed_blocks:
+        card = build_material_card(block)
+        if card:
+            embed_blocks[block_id] = card
 
 
 html_parts = []
@@ -312,6 +492,10 @@ html = f"""<!doctype html>
     .embed-card{{margin:18px 0;padding:14px 16px;border:1px solid #d8d0c2;border-radius:14px;background:#f8f5ee}}
     .embed-file-name{{margin-top:6px;font-weight:600}}
     .embed-file-meta{{margin-top:4px;color:var(--muted);font-size:13px}}
+    .embed-links{{margin-top:10px}}
+    .embed-links a{{color:#8b5a00;text-decoration:none;font-weight:600}}
+    .embed-links a:hover{{text-decoration:underline}}
+    .local-video{{display:block;width:100%;max-width:100%;margin-top:14px;border-radius:12px;background:#111}}
     .image-figure,.block.docx-image-block{{margin:24px 0}}
     .fallback-image,.docx-image{{display:block;max-width:100%;height:auto;border:1px solid #ddd;background:#fafafa;border-radius:14px}}
     .block.docx-image-block .image-block-width-wrapper,
@@ -426,11 +610,15 @@ html = str(soup)
             "specialBlocks": len(special_blocks),
             "gridInsertions": len(grid_insertions),
             "imageBlocks": len(image_blocks),
+            "materialBlocks": len(material_manifest),
             "diffCount": len(diffs),
         },
         ensure_ascii=False,
         indent=2,
     )
+)
+(OUT_DIR / "material-manifest.json").write_text(
+    json.dumps(material_manifest, ensure_ascii=False, indent=2)
 )
 
 link_path = OUT_DIR / "images"

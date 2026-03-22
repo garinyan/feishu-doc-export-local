@@ -15,6 +15,7 @@ This repository contains a reusable agent workflow package plus the scripts that
 - localize images into a sibling `images/` directory
 - audit text completeness against the live runtime sequence
 - audit image completeness separately and backfill missing images from live sections when needed
+- audit material completeness for PPT, video, HTML attachments, interactive cards, and whiteboards
 
 核心思路：
 
@@ -24,6 +25,7 @@ This repository contains a reusable agent workflow package plus the scripts that
 - 从飞书运行时的 `docxClientvarFetchManager` 读取完整 chunk 序列
 - 用 live 结构化 HTML 补表格、图片、引用、多列等特殊块
 - 用本地化图片和完整性审计保证结果可交付
+- 单独审计附件素材类型，避免“文本和图片齐了，但 PPT / 视频 / 白板 / 互动卡片静默丢失”
 - 如果有缺图，优先通过目录锚点跳转和虚拟渲染区扫描回填原图，而不是直接退回截图
 
 ## What This Is Good At
@@ -203,7 +205,8 @@ python3 scripts/run_feishu_local_export.py \
 7. 生成内容完整性审计
 8. 对缺图做 section-targeted backfill
 9. 单独核对图片完整性
-9. 在 Chrome 里打开并验证结果
+10. 单独核对素材完整性，覆盖 PPT / 视频 / HTML 附件 / 互动卡片 / 白板
+11. 在 Chrome 里打开并验证结果
 
 补图链路的经验：
 
@@ -226,6 +229,8 @@ The main result is written under:
 - `exports/cdp-export/full-live-export-v2/images/`
 - `exports/cdp-export/full-live-export-v2/content-completeness-audit.json`
 - `exports/cdp-export/full-live-export-v2/image-completeness-final.json`
+- `exports/cdp-export/full-live-export-v2/material-completeness-audit.json`
+- `exports/cdp-export/full-live-export-v2/material-manifest.json`
 
 辅助产物通常还包括：
 
@@ -242,9 +247,10 @@ The main result is written under:
 5. Build the offline HTML package from clientvar content plus structured block helpers.
 6. Audit text completeness against the live clientvar sequence.
 7. Audit image completeness separately.
-8. If image counts still mismatch, navigate by heading or catalogue and retry localization.
-9. If needed, preserve section-level screenshots for unresolved image-backed sections.
-10. Open the local result in Chrome and verify images and sections.
+8. Audit material completeness separately for attachments and embedded blocks.
+9. If image counts still mismatch, navigate by heading or catalogue and retry localization.
+10. If needed, preserve section-level screenshots for unresolved image-backed sections.
+11. Open the local result in Chrome and verify images, sections, and material cards.
 
 为什么这套流程比直接保存网页更稳：
 

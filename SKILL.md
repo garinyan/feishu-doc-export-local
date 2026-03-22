@@ -14,6 +14,7 @@ This file is the Codex/OpenAI adapter for the repository. The tool-agnostic work
 - The user cares about content completeness more than exact original runtime styling.
 - The user wants folded sections restored.
 - The user wants a local HTML package with images and a completeness audit.
+- The user also cares about attachments such as PPT, video, HTML files, whiteboards, or interactive blocks not being dropped.
 
 ## Do Not Start Here
 
@@ -73,10 +74,18 @@ Preferred single entrypoint:
 - For images hidden behind virtualized section placeholders, jump to the nearest heading and scan within that section until the real image block renders.
 - Only use section-level screenshots as a fallback after direct original-image backfill has failed.
 
-9. Verify in Chrome.
+9. Audit material completeness separately.
+- Use `scripts/audit_material_completeness.py`.
+- Do not assume text and images being complete means attachments are complete.
+- Check `file`, `view`, `isv`, and `whiteboard` source units explicitly.
+- Ensure local HTML contains material cards and local asset links where exported assets exist.
+
+10. Verify in Chrome.
 - Use `scripts/verify_v2_sections_in_chrome_cdp.mjs`.
 - Confirm:
   - all images load
+  - material cards are populated
+  - local attachment links exist
   - target sections exist
   - restored folded content appears after the headings
 
@@ -90,6 +99,10 @@ Deliver a local folder that contains:
   - `exports/cdp-export/full-live-export-v2/images`
 - Completeness audit:
   - `exports/cdp-export/full-live-export-v2/content-completeness-audit.json`
+- Material completeness audit:
+  - `exports/cdp-export/full-live-export-v2/material-completeness-audit.json`
+- Material manifest:
+  - `exports/cdp-export/full-live-export-v2/material-manifest.json`
 
 ## Validation Rules
 
@@ -97,9 +110,11 @@ Deliver a local folder that contains:
 - Require `missing_exact_text_blocks = 0` before claiming text completeness.
 - Require all local images to load before claiming image completeness.
 - Reconcile source image blocks against rendered local image refs before claiming image completeness.
+- Reconcile source material units against rendered local material cards before claiming attachment completeness.
 - Distinguish clearly:
   - `content completeness`
   - `image completeness`
+  - `material completeness`
   - `fallback screenshot completeness`
   - `visual/runtime parity`
 
@@ -145,6 +160,8 @@ These are acceptable only after content completeness is verified:
   - `scripts/audit_v2_content_completeness.py`
 - Image completeness audit:
   - `scripts/audit_image_completeness.py`
+- Material completeness audit:
+  - `scripts/audit_material_completeness.py`
 - Browser verification:
   - `scripts/verify_v2_sections_in_chrome_cdp.mjs`
 
