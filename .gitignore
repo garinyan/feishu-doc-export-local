@@ -1,0 +1,7 @@
+.DS_Store
+.chrome-cdp/
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+exports/

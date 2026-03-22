@@ -1,0 +1,13 @@
+{
+  "name": "feishu-doc-export-local",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Export Feishu docs from a live Chrome tab into a local HTML package with localized images and a completeness audit.",
+  "type": "module",
+  "scripts": {
+    "export": "python3 scripts/run_feishu_local_export.py"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

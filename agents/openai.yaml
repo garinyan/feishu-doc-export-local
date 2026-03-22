@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feishu Doc Export Local"
+  short_description: "Export Feishu docs to local HTML with completeness audit"
+  default_prompt: "Use $feishu-doc-export-local to export a Feishu document, including one embedded in a third-party page, from a live browser tab into a local HTML package with localized images and a completeness audit."
