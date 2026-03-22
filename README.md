@@ -9,18 +9,22 @@ Export a Feishu/Lark doc, or a Feishu doc wrapped by another site, into a local 
 This repository contains a reusable agent workflow package plus the scripts that proved most reliable in practice:
 
 - use the user's already-loaded Chrome tab via CDP
+- preprocess the live page by scrolling and expanding before extraction
 - read Feishu runtime chunk data from `docxClientvarFetchManager`
 - rebuild a readable offline HTML package
 - localize images into a sibling `images/` directory
 - audit text completeness against the live runtime sequence
+- audit image completeness separately and fall back to section screenshots when needed
 
 核心思路：
 
 - 复用用户已经登录、已经加载好的 Chrome 标签页
 - 通过 Chrome CDP 接管当前标签页，而不是新开浏览器会话
+- 在真正导出前先做预处理：滚动触发懒加载、展开折叠、重试失败图片
 - 从飞书运行时的 `docxClientvarFetchManager` 读取完整 chunk 序列
 - 用 live 结构化 HTML 补表格、图片、引用、多列等特殊块
 - 用本地化图片和完整性审计保证结果可交付
+- 如果个别章节图片仍无法稳定抓取，用章节截图做信息保底
 
 ## What This Is Good At
 
@@ -190,13 +194,21 @@ python3 scripts/run_feishu_local_export.py \
 
 运行后会依次做这些事：
 
-1. 导出 live 图片和第一版本地 HTML
-2. 导出结构化 live HTML
-3. 导出完整 clientvar 顺序块
-4. 可选补抓指定折叠标题下的内容
-5. 重建 `document-v2.html`
-6. 生成内容完整性审计
-7. 在 Chrome 里打开并验证结果
+1. 先在 live 页面做预处理，触发懒加载并尽量展开折叠内容
+2. 导出 live 图片和第一版本地 HTML
+3. 导出结构化 live HTML
+4. 导出完整 clientvar 顺序块
+5. 可选补抓指定折叠标题下的内容
+6. 重建 `document-v2.html`
+7. 生成内容完整性审计
+8. 单独核对图片完整性
+9. 在 Chrome 里打开并验证结果
+
+其中预处理由 `scripts/preprocess_feishu_live_page.mjs` 执行；长文档滚动上限可通过环境变量调整：
+
+- `FEISHU_EXPORT_MAX_ROUNDS`
+- `FEISHU_EXPORT_MAX_IDLE_ROUNDS`
+- `FEISHU_PREPROCESS_MAX_SCROLL_ROUNDS`
 
 ## Output
 
@@ -219,8 +231,11 @@ The main result is written under:
 3. Export the full ordered clientvar chunk sequence from `docxClientvarFetchManager`.
 4. Optionally extract specific folded sections by heading.
 5. Build the offline HTML package from clientvar content plus structured block helpers.
-6. Audit completeness against the live clientvar sequence.
-7. Open the local result in Chrome and verify images and sections.
+6. Audit text completeness against the live clientvar sequence.
+7. Audit image completeness separately.
+8. If image counts still mismatch, navigate by heading or catalogue and retry localization.
+9. If needed, preserve section-level screenshots for unresolved image-backed sections.
+10. Open the local result in Chrome and verify images and sections.
 
 为什么这套流程比直接保存网页更稳：
 
@@ -247,6 +262,8 @@ Raw host-page HTML, `MHTML`, and browser print output often fail on embedded Fei
 - 目标标签页没有真正加载完成
 - 嵌入页里有多个 iframe，但脚本只接到了错误页面
 - 只拿到了可见 DOM，没有拿到完整 clientvar chunk
+- 没有在导出前先做滚动和折叠展开预处理
+- 文本完整性已经达标，但图片完整性没有单独核对
 - 导出后没有跑完整性审计就过早交付
 
 ## Future Work

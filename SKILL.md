@@ -38,16 +38,22 @@ Preferred single entrypoint:
 - If the page is a wrapper, access the embedded Feishu iframe.
 - Confirm the document token and title from runtime data.
 
-3. Export the full runtime clientvar sequence.
+3. Preprocess the live page before extraction.
+- Run a full scroll pass inside the Feishu frame to trigger lazy loading.
+- Try generic expand actions for likely folded or collapsed blocks.
+- Retry visible failed image placeholders before the main export.
+- Treat "tab is open" and "page is export-ready" as different states.
+
+4. Export the full runtime clientvar sequence.
 - Use `scripts/export_full_clientvar_sequence.mjs`.
 - This is the primary content baseline.
 - It produces `exports/cdp-export/v2-work/full-clientvar-sequence.json`.
 
-4. Restore known folded content.
+5. Restore known folded content.
 - If specific folded sections are missing, use `scripts/export_missing_intro_sections_from_clientvars.mjs`.
 - This is only a supplement. Once full clientvar sequence is available, prefer rebuilding from that full sequence.
 
-5. Build the local HTML package.
+6. Build the local HTML package.
 - Use `scripts/build_full_live_v2.py`.
 - This rebuilds `exports/cdp-export/full-live-export-v2/document-v2.html`.
 - It uses:
@@ -55,12 +61,18 @@ Preferred single entrypoint:
   - structured live HTML for special blocks and images
   - localized image assets from `exports/cdp-export/full-live-export/images`
 
-6. Audit content completeness.
+7. Audit text completeness.
 - Use `scripts/audit_v2_content_completeness.py`.
 - This compares the local HTML text against the live clientvar sequence.
 - The goal is `missing_exact_text_blocks = 0`.
 
-7. Verify in Chrome.
+8. Audit image completeness separately.
+- Compare source image block count against local HTML image refs.
+- Do not assume text completeness implies image completeness.
+- If specific sections still miss images, drive the page by heading or catalogue and retry image export/localization.
+- If stubborn image-backed sections still cannot be localized, preserve section-level screenshots as a fallback instead of dropping them.
+
+9. Verify in Chrome.
 - Use `scripts/verify_v2_sections_in_chrome_cdp.mjs`.
 - Confirm:
   - all images load
@@ -83,8 +95,11 @@ Deliver a local folder that contains:
 - Treat the live clientvar sequence as the source of truth for content completeness.
 - Require `missing_exact_text_blocks = 0` before claiming text completeness.
 - Require all local images to load before claiming image completeness.
+- Reconcile source image blocks against rendered local image refs before claiming image completeness.
 - Distinguish clearly:
   - `content completeness`
+  - `image completeness`
+  - `fallback screenshot completeness`
   - `visual/runtime parity`
 
 ## Remaining Acceptable Differences
@@ -102,11 +117,14 @@ These are acceptable only after content completeness is verified:
 - Using MHTML/PDF from an embedded host page: often blank or incomplete because of iframe isolation.
 - Treating special blocks as plain text too early: loses table/grid/quote grouping.
 - Ignoring clientvar chunk order: can splice section content into the wrong heading.
+- Assuming missing images can always be fetched directly from tokens: some images only become accessible after section-targeted rendering in the active session.
 
 ## Important Files
 
 - Skill entrypoint:
   - `scripts/run_feishu_local_export.py`
+- Preprocess live page:
+  - `scripts/preprocess_feishu_live_page.mjs`
 - Main exporter:
   - `scripts/export_full_clientvar_sequence.mjs`
 - Folded-section supplement:
@@ -115,6 +133,9 @@ These are acceptable only after content completeness is verified:
   - `scripts/export_feishu_full_live.mjs`
 - Structured live HTML export:
   - `scripts/export_feishu_live_structured_html.mjs`
+- Live scroll/image exporter uses env caps:
+  - `FEISHU_EXPORT_MAX_ROUNDS`
+  - `FEISHU_EXPORT_MAX_IDLE_ROUNDS`
 - HTML builder:
   - `scripts/build_full_live_v2.py`
 - Completeness audit:

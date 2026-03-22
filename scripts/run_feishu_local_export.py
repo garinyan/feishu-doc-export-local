@@ -53,6 +53,7 @@ def main() -> None:
 
     env = build_env(args)
 
+    run(["node", str(WORKSPACE_SCRIPTS / "preprocess_feishu_live_page.mjs")], env)
     run(["node", str(WORKSPACE_SCRIPTS / "export_feishu_full_live.mjs")], env)
     run(["node", str(WORKSPACE_SCRIPTS / "export_feishu_live_structured_html.mjs")], env)
     run(["node", str(WORKSPACE_SCRIPTS / "export_full_clientvar_sequence.mjs")], env)

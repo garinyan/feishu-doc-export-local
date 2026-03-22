@@ -6,6 +6,7 @@ const TARGET_URL =
   process.env.FEISHU_EXPORT_TARGET_URL || "";
 const OUT_DIR = path.resolve("exports", "cdp-export", "structured-live-export");
 const IMAGE_DIR = path.resolve("exports", "cdp-export", "full-live-export", "images");
+const MAX_ROUNDS = Number(process.env.FEISHU_EXPORT_MAX_ROUNDS || 180);
 
 async function findPage(browser) {
   for (const context of browser.contexts()) {
@@ -74,7 +75,7 @@ while (y < meta.scrollHeight + meta.clientHeight) {
 
   y += Math.max(450, Math.floor(meta.clientHeight * 0.6));
   rounds += 1;
-  if (rounds > 500) break;
+  if (rounds > MAX_ROUNDS) break;
 }
 
 const ordered = Array.from(blocks.values());

@@ -77,7 +77,29 @@ Why it worked:
 - Reused the real logged-in, fully loaded tab.
 - Avoided the broken new-session path.
 
-### 2. Inspecting Feishu runtime globals
+### 2. Preprocessing the live page before extraction
+
+Why it mattered:
+
+- Some folded content stayed hidden until the page received real user-like interaction.
+- Some images did not render until their sections were scrolled into view.
+- A first-pass export from a "loaded but not fully walked" page under-counted images.
+
+What proved useful:
+
+- Run a full scroll pass inside the Feishu frame to trigger lazy loading.
+- Try generic expand actions before export:
+  - folded controls
+  - collapsed toggles
+  - short-text affordances such as "expand" / "show more"
+- Retry failed image placeholders before starting the main export.
+
+Lesson:
+
+- Treat "page is open" and "page is export-ready" as different states.
+- A preprocessing pass should happen before content extraction.
+
+### 3. Inspecting Feishu runtime globals
 
 Key findings:
 
@@ -92,7 +114,7 @@ Critical fields:
 - per-chunk `data.block_sequence`
 - per-chunk `data.block_map`
 
-### 3. Reconstructing document order from clientvar chunks
+### 4. Reconstructing document order from clientvar chunks
 
 Why it mattered:
 
@@ -103,7 +125,7 @@ Why it mattered:
 
 That produced a stable full sequence of all chunked blocks and text content.
 
-### 4. Building the local HTML from full clientvar sequence
+### 5. Building the local HTML from full clientvar sequence
 
 Why it worked:
 
@@ -113,7 +135,32 @@ Why it worked:
   - some special blocks
   - some grid/table wrappers
 
-### 5. Auditing completeness separately from styling
+### 6. Image completeness required its own pass
+
+What happened:
+
+- Text completeness reached zero-loss before image completeness did.
+- Some image blocks were present in the clientvar sequence but absent from the current DOM snapshot.
+- Specific folded sections still missed images after the first full export.
+
+Key lesson:
+
+- Do not assume `missing_exact_text_blocks = 0` means the export is fully complete.
+- Image completeness must be checked separately against source image blocks.
+
+### 7. Section-targeted navigation could unlock missing images
+
+What happened:
+
+- Some missing images became accessible only after navigating to their section from the catalogue or table of contents.
+- Knowing the image token alone was not always enough.
+- Direct stream fetches could still return `401` until the target section was rendered in the active session.
+
+Lesson:
+
+- When image counts do not match, navigate by heading or catalogue entry to force section rendering, then retry image export.
+
+### 8. Auditing completeness separately from styling
 
 Why it worked:
 
@@ -125,17 +172,41 @@ The final text audit reached:
 
 - `missing_exact_text_blocks = 0`
 
+Image-related follow-up still remained necessary:
+
+- compare source image block count with local HTML image refs
+- re-render missing-image sections
+- retry localization
+
+### 9. Section screenshots are a valid completeness fallback
+
+Why they matter:
+
+- Some stubborn image-backed sections may still fail native localization after repeated retries.
+- In those cases, section screenshots preserve information even if the original image node cannot be exported cleanly.
+
+Lesson:
+
+- If exact image extraction is still incomplete, add section-level screenshot supplements instead of silently dropping that information.
+
 ## Final Proven Strategy
 
 1. Use live Chrome CDP on the already-loaded tab.
 2. Access the Feishu iframe.
-3. Export the complete clientvar sequence from `docxClientvarFetchManager`.
-4. Use that sequence as the content baseline.
-5. Use structured HTML only as a helper for special blocks and images.
-6. Localize images into a sibling `images/` folder.
-7. Rebuild a readable offline HTML package.
-8. Audit completeness against the full clientvar sequence.
-9. Verify image loading and restored sections in Chrome.
+3. Preprocess the page:
+   - full scroll for lazy loading
+   - expand likely folded controls
+   - retry failed image placeholders
+4. Export the complete clientvar sequence from `docxClientvarFetchManager`.
+5. Use that sequence as the content baseline.
+6. Use structured HTML only as a helper for special blocks and images.
+7. Localize images into a sibling `images/` folder.
+8. Rebuild a readable offline HTML package.
+9. Audit text completeness against the full clientvar sequence.
+10. Audit image completeness separately.
+11. For missing images, navigate by heading/catalogue and retry localization.
+12. If needed, preserve section-level screenshots as a fallback layer.
+13. Verify image loading and restored sections in Chrome.
 
 ## Known Boundary
 
@@ -156,5 +227,9 @@ That is acceptable if:
 
 - Prefer runtime chunk data over visible DOM.
 - Prefer ordered clientvar chunks over arbitrary object iteration.
+- Preprocess first: expand and scroll before extraction.
 - Separate content audit from layout review.
+- Separate text completeness from image completeness.
+- If images are missing, drive the page by heading or catalogue before retrying.
+- Use screenshot supplements instead of dropping unresolved sections.
 - When a block has no text but visible semantic value, represent it explicitly instead of dropping it.

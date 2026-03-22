@@ -14,11 +14,18 @@
 1. 复用用户已经登录并加载完成的 Chrome 标签页。
 2. 通过 Chrome CDP 连接 `9222` 端口。
 3. 如果目标在第三方页面中，进入其中的飞书 iframe。
-4. 从 `docxClientvarFetchManager` 导出完整且有序的运行时 chunk 序列。
-5. 导出 live 图片和结构化块 HTML。
-6. 重建最终离线 HTML 包。
-7. 运行完整性审计。
-8. 在 Chrome 中验证图片加载和关键章节存在性。
+4. 在真正导出前先做预处理：
+   - 整页滚动一遍，触发懒加载
+   - 尝试展开可能折叠的区块
+   - 如果页面里已经出现失败图片，占位要先重试
+5. 从 `docxClientvarFetchManager` 导出完整且有序的运行时 chunk 序列。
+6. 导出 live 图片和结构化块 HTML。
+7. 重建最终离线 HTML 包。
+8. 先做文本完整性审计。
+9. 再单独做图片完整性审计。
+10. 如果仍有缺图，按标题或目录定点跳转并重试图片本地化。
+11. 如果某些章节图片仍无法稳定导出，用章节截图做保底。
+12. 在 Chrome 中验证图片加载和关键章节存在性。
 
 ## 不要走这些捷径
 
@@ -26,6 +33,7 @@
 - 不要把 `MHTML` 或 print-to-PDF 当主导出链路。
 - 不要在存在运行时 chunk 数据时只依赖 `document.json`。
 - 不要假设当前可见 DOM 已经包含所有折叠内容。
+- 不要把“文本完整”误判成“图片也完整”。
 
 ## 主入口
 
@@ -46,6 +54,7 @@ python3 scripts/run_feishu_local_export.py \
 ## 关键文件
 
 - `scripts/run_feishu_local_export.py`
+- `scripts/preprocess_feishu_live_page.mjs`
 - `scripts/export_feishu_full_live.mjs`
 - `scripts/export_feishu_live_structured_html.mjs`
 - `scripts/export_full_clientvar_sequence.mjs`
@@ -64,5 +73,6 @@ python3 scripts/run_feishu_local_export.py \
 
 - `missing_exact_text_blocks = 0`
 - 本地化图片能正常加载
+- 源图片块数量和本地图片引用数量已经核对
 - 用户关心的折叠章节已经恢复
 - 剩余差异只属于视觉或运行时行为，不是内容缺失

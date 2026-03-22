@@ -14,11 +14,18 @@ Use this repository when the task is to export a Feishu/Lark document, or a Feis
 1. Reuse the user's already-loaded Chrome tab.
 2. Connect through Chrome CDP on port `9222`.
 3. Access the embedded Feishu frame if the page is hosted inside another site.
-4. Export the full ordered runtime chunk sequence from `docxClientvarFetchManager`.
-5. Export live images and structured block HTML.
-6. Rebuild the final offline HTML package.
-7. Run completeness audit.
-8. Verify images and key sections in Chrome.
+4. Preprocess the live page before extraction:
+   - full scroll to trigger lazy loading
+   - expand likely folded controls
+   - retry visible failed image placeholders
+5. Export the full ordered runtime chunk sequence from `docxClientvarFetchManager`.
+6. Export live images and structured block HTML.
+7. Rebuild the final offline HTML package.
+8. Run text completeness audit.
+9. Audit image completeness separately.
+10. If images are still missing, navigate by heading or catalogue and retry localization.
+11. If some image-backed sections still fail, bundle section screenshots as a fallback.
+12. Verify images and key sections in Chrome.
 
 ## Avoid These Shortcuts
 
@@ -26,6 +33,7 @@ Use this repository when the task is to export a Feishu/Lark document, or a Feis
 - `MHTML` or print-to-PDF as the main export path
 - using `document.json` alone when runtime chunk data is available
 - assuming visible DOM already contains all folded content
+- assuming text completeness automatically means image completeness
 
 ## Main Entrypoint
 
@@ -46,6 +54,7 @@ python3 scripts/run_feishu_local_export.py \
 ## Important Files
 
 - `scripts/run_feishu_local_export.py`
+- `scripts/preprocess_feishu_live_page.mjs`
 - `scripts/export_feishu_full_live.mjs`
 - `scripts/export_feishu_live_structured_html.mjs`
 - `scripts/export_full_clientvar_sequence.mjs`
@@ -64,5 +73,6 @@ python3 scripts/run_feishu_local_export.py \
 
 - `missing_exact_text_blocks = 0`
 - localized images load successfully
+- source image blocks are reconciled against local image refs
 - requested folded sections are present
 - remaining differences are visual/runtime differences, not missing content

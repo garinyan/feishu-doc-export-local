@@ -5,6 +5,8 @@ import { chromium } from "playwright";
 const TARGET_URL =
   process.env.FEISHU_EXPORT_TARGET_URL || "";
 const OUT_DIR = path.resolve("exports", "cdp-export", "full-live-export");
+const MAX_ROUNDS = Number(process.env.FEISHU_EXPORT_MAX_ROUNDS || 180);
+const MAX_IDLE_ROUNDS = Number(process.env.FEISHU_EXPORT_MAX_IDLE_ROUNDS || 10);
 
 function escapeHtml(value) {
   return String(value || "")
@@ -134,8 +136,8 @@ async function main() {
 
     y += Math.max(450, Math.floor(meta.clientHeight * 0.6));
     rounds += 1;
-    if (idleRounds > 12) break;
-    if (rounds > 500) break;
+    if (idleRounds > MAX_IDLE_ROUNDS) break;
+    if (rounds > MAX_ROUNDS) break;
   }
 
   const ordered = Array.from(blocks.values());
