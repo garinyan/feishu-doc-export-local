@@ -27,6 +27,8 @@ for item in src_items:
     text = norm(item.get("text") or "")
     if not text:
         continue
+    if item.get("type") == "page":
+        continue
     if text not in body:
         missing.append(
             {

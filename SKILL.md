@@ -70,7 +70,8 @@ Preferred single entrypoint:
 - Compare source image block count against local HTML image refs.
 - Do not assume text completeness implies image completeness.
 - If specific sections still miss images, drive the page by heading or catalogue and retry image export/localization.
-- If stubborn image-backed sections still cannot be localized, preserve section-level screenshots as a fallback instead of dropping them.
+- For images hidden behind virtualized section placeholders, jump to the nearest heading and scan within that section until the real image block renders.
+- Only use section-level screenshots as a fallback after direct original-image backfill has failed.
 
 9. Verify in Chrome.
 - Use `scripts/verify_v2_sections_in_chrome_cdp.mjs`.
@@ -131,6 +132,8 @@ These are acceptable only after content completeness is verified:
   - `scripts/export_missing_intro_sections_from_clientvars.mjs`
 - Live image export:
   - `scripts/export_feishu_full_live.mjs`
+- Missing-image backfill:
+  - `scripts/backfill_missing_images_from_live_sections.mjs`
 - Structured live HTML export:
   - `scripts/export_feishu_live_structured_html.mjs`
 - Live scroll/image exporter uses env caps:
@@ -140,6 +143,8 @@ These are acceptable only after content completeness is verified:
   - `scripts/build_full_live_v2.py`
 - Completeness audit:
   - `scripts/audit_v2_content_completeness.py`
+- Image completeness audit:
+  - `scripts/audit_image_completeness.py`
 - Browser verification:
   - `scripts/verify_v2_sections_in_chrome_cdp.mjs`
 

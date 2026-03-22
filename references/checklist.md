@@ -22,6 +22,7 @@
 - Do not rely on `document.json` alone.
 - If a user points out folded sections, verify them against clientvar sequence, not just DOM siblings.
 - Keep structured live HTML as a helper layer for images and special blocks.
+- If image blocks are still missing after the first pass, run section-targeted image backfill before rebuilding the final HTML.
 
 ## Build
 
@@ -38,7 +39,8 @@
 - Compare source image block count against local HTML image refs.
 - If images are still missing, group them by heading or section before retrying.
 - Navigate to missing-image sections through the catalogue or headings and retry localization.
-- If native image export still fails, capture section-level screenshots as a fallback.
+- For virtualized sections, scan inside the section placeholder after jumping to the nearest heading.
+- Use section screenshots only after direct live-image backfill has failed.
 
 ## Browser Verification
 
@@ -60,5 +62,5 @@ When describing status:
 
 - say whether content is complete
 - say whether images are localized
-- say whether any image completeness relies on section screenshot fallback
+- say whether any image completeness still relies on section screenshot fallback
 - say which differences are still only visual/runtime differences

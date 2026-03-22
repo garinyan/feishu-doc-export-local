@@ -14,7 +14,7 @@ This repository contains a reusable agent workflow package plus the scripts that
 - rebuild a readable offline HTML package
 - localize images into a sibling `images/` directory
 - audit text completeness against the live runtime sequence
-- audit image completeness separately and fall back to section screenshots when needed
+- audit image completeness separately and backfill missing images from live sections when needed
 
 核心思路：
 
@@ -24,7 +24,7 @@ This repository contains a reusable agent workflow package plus the scripts that
 - 从飞书运行时的 `docxClientvarFetchManager` 读取完整 chunk 序列
 - 用 live 结构化 HTML 补表格、图片、引用、多列等特殊块
 - 用本地化图片和完整性审计保证结果可交付
-- 如果个别章节图片仍无法稳定抓取，用章节截图做信息保底
+- 如果有缺图，优先通过目录锚点跳转和虚拟渲染区扫描回填原图，而不是直接退回截图
 
 ## What This Is Good At
 
@@ -201,8 +201,16 @@ python3 scripts/run_feishu_local_export.py \
 5. 可选补抓指定折叠标题下的内容
 6. 重建 `document-v2.html`
 7. 生成内容完整性审计
-8. 单独核对图片完整性
+8. 对缺图做 section-targeted backfill
+9. 单独核对图片完整性
 9. 在 Chrome 里打开并验证结果
+
+补图链路的经验：
+
+- 有些图片不在普通 DOM 同级节点里，而是藏在虚拟渲染占位块后面
+- 这类图片需要先跳到对应 heading，再在该 section 内逐段滚动，等待真实 `img` 渲染
+- 另一些图片可以直接通过目录锚点跳到 `heading5/heading6` 小节后拿到原始 `blob:` 图像
+- 只有在原始图片仍无法获取时，才考虑章节截图兜底
 
 其中预处理由 `scripts/preprocess_feishu_live_page.mjs` 执行；长文档滚动上限可通过环境变量调整：
 
@@ -217,6 +225,7 @@ The main result is written under:
 - `exports/cdp-export/full-live-export-v2/document-v2.html`
 - `exports/cdp-export/full-live-export-v2/images/`
 - `exports/cdp-export/full-live-export-v2/content-completeness-audit.json`
+- `exports/cdp-export/full-live-export-v2/image-completeness-final.json`
 
 辅助产物通常还包括：
 

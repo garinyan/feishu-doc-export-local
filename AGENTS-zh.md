@@ -24,8 +24,9 @@
 8. 先做文本完整性审计。
 9. 再单独做图片完整性审计。
 10. 如果仍有缺图，按标题或目录定点跳转并重试图片本地化。
-11. 如果某些章节图片仍无法稳定导出，用章节截图做保底。
-12. 在 Chrome 中验证图片加载和关键章节存在性。
+11. 如果图片藏在虚拟渲染占位块后面，要跳到最近标题后在该 section 内继续扫描。
+12. 只有原图回填仍失败时，才用章节截图做保底。
+13. 在 Chrome 中验证图片加载和关键章节存在性。
 
 ## 不要走这些捷径
 
@@ -59,8 +60,10 @@ python3 scripts/run_feishu_local_export.py \
 - `scripts/export_feishu_live_structured_html.mjs`
 - `scripts/export_full_clientvar_sequence.mjs`
 - `scripts/export_missing_intro_sections_from_clientvars.mjs`
+- `scripts/backfill_missing_images_from_live_sections.mjs`
 - `scripts/build_full_live_v2.py`
 - `scripts/audit_v2_content_completeness.py`
+- `scripts/audit_image_completeness.py`
 - `scripts/verify_v2_sections_in_chrome_cdp.mjs`
 
 ## 预期输出
@@ -68,6 +71,7 @@ python3 scripts/run_feishu_local_export.py \
 - `exports/cdp-export/full-live-export-v2/document-v2.html`
 - `exports/cdp-export/full-live-export-v2/images/`
 - `exports/cdp-export/full-live-export-v2/content-completeness-audit.json`
+- `exports/cdp-export/full-live-export-v2/image-completeness-final.json`
 
 ## 成功标准
 

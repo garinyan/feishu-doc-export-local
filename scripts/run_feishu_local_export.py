@@ -11,6 +11,7 @@ WORKSPACE_SCRIPTS = REPO_ROOT / "scripts"
 EXPORT_ROOT = REPO_ROOT / "exports" / "cdp-export"
 FINAL_HTML = EXPORT_ROOT / "full-live-export-v2" / "document-v2.html"
 AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "content-completeness-audit.json"
+IMAGE_AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "image-completeness-final.json"
 
 
 def run(cmd: list[str], env: dict[str, str]) -> None:
@@ -59,8 +60,10 @@ def main() -> None:
     run(["node", str(WORKSPACE_SCRIPTS / "export_full_clientvar_sequence.mjs")], env)
     if args.sections:
         run(["node", str(WORKSPACE_SCRIPTS / "export_missing_intro_sections_from_clientvars.mjs")], env)
+    run(["node", str(WORKSPACE_SCRIPTS / "backfill_missing_images_from_live_sections.mjs")], env)
     run(["python3", str(WORKSPACE_SCRIPTS / "build_full_live_v2.py")], env)
     run(["python3", str(WORKSPACE_SCRIPTS / "audit_v2_content_completeness.py")], env)
+    run(["python3", str(WORKSPACE_SCRIPTS / "audit_image_completeness.py")], env)
     run(["node", str(WORKSPACE_SCRIPTS / "verify_v2_sections_in_chrome_cdp.mjs")], env)
     if not args.skip_open:
         run(["open", str(FINAL_HTML)], env)
@@ -70,6 +73,7 @@ def main() -> None:
             {
                 "final_html": str(FINAL_HTML),
                 "audit": str(AUDIT_JSON),
+                "image_audit": str(IMAGE_AUDIT_JSON),
                 "url": args.url,
                 "sections": args.sections,
             },
