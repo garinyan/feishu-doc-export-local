@@ -189,6 +189,47 @@ Lesson:
 
 - If exact image extraction is still incomplete, add section-level screenshot supplements instead of silently dropping that information.
 
+### 10. Raw image-block counts can overstate real losses
+
+What happened:
+
+- A later audit still reported missing images even when the user could visually confirm the page looked complete.
+- The remaining ids were `image` blocks in the clientvar sequence with no token, no dimensions, no mime, and no usable source metadata.
+
+Lesson:
+
+- Do not treat every `image` block in the clientvar sequence as a confirmed missing asset.
+- Some are only empty placeholder records.
+- Image completeness must distinguish:
+  - raw image blocks
+  - confirmed image assets
+  - rendered local image refs
+
+### 11. Earlier successful exports can repair a later clean rerun
+
+What happened:
+
+- A fresh clean export still missed several step-by-step screenshots in one section.
+- Those exact block ids had already been localized in an earlier export directory.
+- Reconciling assets by block id restored the section immediately.
+
+Lesson:
+
+- Before declaring a true image loss, compare current results against earlier successful export directories.
+- Block-id based asset reconciliation is a valid recovery path, not a hack.
+
+### 12. User-reported local gaps beat aggregate metrics
+
+What happened:
+
+- Aggregate counts looked acceptable, but the user pointed to one exact sentence whose following screenshots were visibly incomplete.
+- Inspecting the neighboring local HTML blocks around that sentence revealed the gap immediately.
+
+Lesson:
+
+- When the user points to a specific sentence, paragraph, or heading, verify that exact neighborhood in the final local HTML.
+- Do not rely only on document-level counts once the user has identified a concrete visible discrepancy.
+
 ## Final Proven Strategy
 
 1. Use live Chrome CDP on the already-loaded tab.
@@ -204,9 +245,12 @@ Lesson:
 8. Rebuild a readable offline HTML package.
 9. Audit text completeness against the full clientvar sequence.
 10. Audit image completeness separately.
-11. For missing images, navigate by heading/catalogue and retry localization.
-12. If needed, preserve section-level screenshots as a fallback layer.
-13. Verify image loading and restored sections in Chrome.
+11. Distinguish raw image-block counts from confirmed image assets.
+12. Reconcile earlier successful localized assets by block id when a rerun misses previously recovered images.
+13. For missing images, navigate by heading/catalogue and retry localization.
+14. If the user points to a specific visible gap, inspect that exact neighborhood in the final local HTML.
+15. If needed, preserve section-level screenshots as a fallback layer.
+16. Verify image loading and restored sections in Chrome.
 
 ## Known Boundary
 
@@ -230,6 +274,9 @@ That is acceptable if:
 - Preprocess first: expand and scroll before extraction.
 - Separate content audit from layout review.
 - Separate text completeness from image completeness.
+- Separate raw image-block counts from confirmed image assets.
 - If images are missing, drive the page by heading or catalogue before retrying.
+- If a user points to one exact line or paragraph, inspect the local HTML sequence around that point directly.
+- Reconcile prior successful export assets by block id before declaring an image truly missing.
 - Use screenshot supplements instead of dropping unresolved sections.
 - When a block has no text but visible semantic value, represent it explicitly instead of dropping it.

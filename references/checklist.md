@@ -39,9 +39,12 @@
 - Require `missing_exact_text_blocks = 0` before claiming text completeness.
 - Count local image references.
 - Compare source image block count against local HTML image refs.
+- Separate raw clientvar image-block counts from confirmed image assets.
+- If a reported missing image id has no token, no dimensions, and no source metadata, treat it as an empty placeholder until proven otherwise.
 - If images are still missing, group them by heading or section before retrying.
 - Navigate to missing-image sections through the catalogue or headings and retry localization.
 - For virtualized sections, scan inside the section placeholder after jumping to the nearest heading.
+- Before declaring an image truly missing, compare current results against older successful export directories and reconcile any matching block ids.
 - Use section screenshots only after direct live-image backfill has failed.
 - Run a separate material audit for attachment units.
 - Check `file`, `view`, `isv`, and `whiteboard` blocks explicitly.
@@ -55,6 +58,7 @@
 - Confirm local attachment links exist for exported assets.
 - Confirm the user’s key sections exist and have body content.
 - Confirm navigation is populated.
+- If the user points to a specific sentence or paragraph, inspect the exact following local HTML blocks and verify the expected image sequence there.
 - If screenshots were needed as fallback, confirm they are linked or bundled clearly.
 
 ## Delivery

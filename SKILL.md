@@ -70,8 +70,13 @@ Preferred single entrypoint:
 8. Audit image completeness separately.
 - Compare source image block count against local HTML image refs.
 - Do not assume text completeness implies image completeness.
+- Split image completeness into two layers:
+  - raw `image` blocks from the clientvar sequence
+  - confirmed image assets with real rendered evidence or source metadata
+- Do not treat empty placeholder `image` blocks as confirmed missing assets.
 - If specific sections still miss images, drive the page by heading or catalogue and retry image export/localization.
 - For images hidden behind virtualized section placeholders, jump to the nearest heading and scan within that section until the real image block renders.
+- If a fresh rerun misses images that were already localized in an earlier successful export, reconcile by block id across runs before treating them as new losses.
 - Only use section-level screenshots as a fallback after direct original-image backfill has failed.
 
 9. Audit material completeness separately.
@@ -110,6 +115,7 @@ Deliver a local folder that contains:
 - Require `missing_exact_text_blocks = 0` before claiming text completeness.
 - Require all local images to load before claiming image completeness.
 - Reconcile source image blocks against rendered local image refs before claiming image completeness.
+- If raw image-block counts disagree with what the user can visibly inspect, verify whether the difference is caused by empty placeholder image blocks.
 - Reconcile source material units against rendered local material cards before claiming attachment completeness.
 - Distinguish clearly:
   - `content completeness`
@@ -134,6 +140,8 @@ These are acceptable only after content completeness is verified:
 - Treating special blocks as plain text too early: loses table/grid/quote grouping.
 - Ignoring clientvar chunk order: can splice section content into the wrong heading.
 - Assuming missing images can always be fetched directly from tokens: some images only become accessible after section-targeted rendering in the active session.
+- Treating every clientvar `image` block as a recoverable original asset: some are only empty placeholders.
+- Treating a clean rerun as fully self-contained: earlier exports may already contain valid localized originals that should be reconciled by block id.
 
 ## Important Files
 
