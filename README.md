@@ -27,6 +27,8 @@ This repository contains a reusable agent workflow package plus the scripts that
 - 用本地化图片和完整性审计保证结果可交付
 - 单独审计附件素材类型，避免“文本和图片齐了，但 PPT / 视频 / 白板 / 互动卡片静默丢失”
 - 如果有缺图，优先通过目录锚点跳转和虚拟渲染区扫描回填原图，而不是直接退回截图
+- 如果 clean rerun 比旧成功导出反而少图，先按 block id 和旧导出目录对账再继续补图
+- 如果需要通过 IM 分享，优先从已验证的目录版导出单文件 HTML，而不是从半成品直接打包
 
 ## What This Is Good At
 
@@ -220,6 +222,26 @@ python3 scripts/run_feishu_local_export.py \
 - `FEISHU_EXPORT_MAX_ROUNDS`
 - `FEISHU_EXPORT_MAX_IDLE_ROUNDS`
 - `FEISHU_PREPROCESS_MAX_SCROLL_ROUNDS`
+
+## Share Through IM
+
+如果需要把结果发给别人，最稳的单文件方案是：
+
+1. 先完成目录版导出并验证
+2. 再把 `document-v2.html` 中的本地图片内嵌成 `data:` URI
+3. 生成单文件 HTML
+4. 在 Chrome 里重新打开并验证图片是否全部加载
+
+命名规则建议：
+
+- 默认使用文档标题作为文件名
+- 保留扩展名
+- 只有在必须区分版本时才追加后缀
+
+例如：
+
+- `AI编程产品出海（含OpenClaw）实战手册.html`
+- `AI编程产品出海（含OpenClaw）实战手册.pdf`
 
 ## Output
 

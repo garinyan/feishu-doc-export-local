@@ -61,6 +61,13 @@
 - If the user points to a specific sentence or paragraph, inspect the exact following local HTML blocks and verify the expected image sequence there.
 - If screenshots were needed as fallback, confirm they are linked or bundled clearly.
 
+## Shareable Artifact
+
+- If the user needs to send the result through IM, generate a single-file HTML by inlining local images.
+- Verify the single-file HTML in Chrome after generation.
+- Name the shareable file after the document title by default.
+- Only append a suffix when needed to distinguish variants such as single-file, PDF, or debug builds.
+
 ## Delivery
 
 Return:

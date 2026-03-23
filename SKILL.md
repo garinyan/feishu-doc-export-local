@@ -61,6 +61,7 @@ Preferred single entrypoint:
   - full clientvar sequence as the text-order baseline
   - structured live HTML for special blocks and images
   - localized image assets from `exports/cdp-export/full-live-export/images`
+- Before final delivery, reconcile the current run against earlier successful export directories by block id so a clean rerun does not silently drop already-localized originals.
 
 7. Audit text completeness.
 - Use `scripts/audit_v2_content_completeness.py`.
@@ -94,6 +95,12 @@ Preferred single entrypoint:
   - target sections exist
   - restored folded content appears after the headings
 
+11. Prepare a shareable artifact when needed.
+- If the user wants to send the result through IM, generate a single-file HTML by inlining local images as `data:` URIs.
+- Verify the single-file result in Chrome, not just by checking file size.
+- Name the shareable file after the document title by default.
+- Keep the extension and only append a suffix when you must distinguish multiple variants.
+
 ## Output Standard
 
 Deliver a local folder that contains:
@@ -109,6 +116,11 @@ Deliver a local folder that contains:
 - Material manifest:
   - `exports/cdp-export/full-live-export-v2/material-manifest.json`
 
+Optional shareable artifact:
+
+- Single-file HTML:
+  - title-based filename such as `Document Title.html`
+
 ## Validation Rules
 
 - Treat the live clientvar sequence as the source of truth for content completeness.
@@ -116,6 +128,7 @@ Deliver a local folder that contains:
 - Require all local images to load before claiming image completeness.
 - Reconcile source image blocks against rendered local image refs before claiming image completeness.
 - If raw image-block counts disagree with what the user can visibly inspect, verify whether the difference is caused by empty placeholder image blocks.
+- If a fresh run disagrees with an earlier successful run, reconcile image assets by block id before claiming a new loss.
 - Reconcile source material units against rendered local material cards before claiming attachment completeness.
 - Distinguish clearly:
   - `content completeness`
@@ -142,6 +155,7 @@ These are acceptable only after content completeness is verified:
 - Assuming missing images can always be fetched directly from tokens: some images only become accessible after section-targeted rendering in the active session.
 - Treating every clientvar `image` block as a recoverable original asset: some are only empty placeholders.
 - Treating a clean rerun as fully self-contained: earlier exports may already contain valid localized originals that should be reconciled by block id.
+- Producing a shareable single-file artifact without browser verification: the file may exist but still fail to render or load embedded media correctly.
 
 ## Important Files
 

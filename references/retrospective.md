@@ -230,6 +230,33 @@ Lesson:
 - When the user points to a specific sentence, paragraph, or heading, verify that exact neighborhood in the final local HTML.
 - Do not rely only on document-level counts once the user has identified a concrete visible discrepancy.
 
+### 13. Cross-run image reconciliation can rescue a clean rerun
+
+What happened:
+
+- A clean rerun still lacked some screenshots in a specific step-by-step section.
+- A cross-run comparison showed those exact block ids already existed in an older successful export.
+- Copying those localized originals into the new run fixed the visible gap immediately.
+
+Lesson:
+
+- Compare the current run against older successful export directories before continuing expensive live recovery attempts.
+- When the same block ids already exist as valid localized originals, reuse them directly.
+
+### 14. Single-file sharing is a separate delivery layer
+
+What happened:
+
+- The user wanted to send the export through an IM tool.
+- The folder-based HTML package was complete, but inconvenient to share directly.
+- A single-file HTML built by inlining local images solved the sharing problem, but it still needed real browser verification.
+
+Lesson:
+
+- Treat shareable single-file HTML as a delivery artifact built from the verified folder-based export.
+- Verify the single-file HTML in Chrome after generation.
+- Name the shareable file after the document title unless there is a strong reason to keep a technical filename.
+
 ## Final Proven Strategy
 
 1. Use live Chrome CDP on the already-loaded tab.
@@ -248,9 +275,11 @@ Lesson:
 11. Distinguish raw image-block counts from confirmed image assets.
 12. Reconcile earlier successful localized assets by block id when a rerun misses previously recovered images.
 13. For missing images, navigate by heading/catalogue and retry localization.
-14. If the user points to a specific visible gap, inspect that exact neighborhood in the final local HTML.
-15. If needed, preserve section-level screenshots as a fallback layer.
-16. Verify image loading and restored sections in Chrome.
+14. Reconcile the current run against earlier successful export directories by block id.
+15. If the user points to a specific visible gap, inspect that exact neighborhood in the final local HTML.
+16. If needed, preserve section-level screenshots as a fallback layer.
+17. Verify image loading and restored sections in Chrome.
+18. If the result must be shared through IM, generate and verify a single-file HTML artifact named after the document title.
 
 ## Known Boundary
 
@@ -278,5 +307,7 @@ That is acceptable if:
 - If images are missing, drive the page by heading or catalogue before retrying.
 - If a user points to one exact line or paragraph, inspect the local HTML sequence around that point directly.
 - Reconcile prior successful export assets by block id before declaring an image truly missing.
+- Build single-file sharing artifacts from an already-verified folder export, not from an unverified intermediate file.
+- Use the document title as the default shareable filename.
 - Use screenshot supplements instead of dropping unresolved sections.
 - When a block has no text but visible semantic value, represent it explicitly instead of dropping it.
