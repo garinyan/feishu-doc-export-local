@@ -135,8 +135,8 @@ Optional shareable artifact:
 Optional Markdown artifacts:
 
 - Markdown package:
-  - `exports/cdp-export/full-live-export-v2/document-v2.md`
-  - `exports/cdp-export/full-live-export-v2/document-v2.assets/`
+  - title-based filename such as `exports/cdp-export/full-live-export-v2/Document Title.md`
+  - sibling assets directory such as `exports/cdp-export/full-live-export-v2/Document Title.assets/`
 - Optional Obsidian import:
   - `Imports/Feishu/<Document Title>.md`
   - `Imports/Feishu/<Document Title>.assets/`

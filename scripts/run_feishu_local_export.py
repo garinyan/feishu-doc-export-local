@@ -10,7 +10,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_SCRIPTS = REPO_ROOT / "scripts"
 EXPORT_ROOT = REPO_ROOT / "exports" / "cdp-export"
 FINAL_HTML = EXPORT_ROOT / "full-live-export-v2" / "document-v2.html"
-FINAL_MD = EXPORT_ROOT / "full-live-export-v2" / "document-v2.md"
 AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "content-completeness-audit.json"
 IMAGE_AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "image-completeness-final.json"
 MATERIAL_AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "material-completeness-audit.json"
@@ -96,8 +95,6 @@ def main() -> None:
             str(WORKSPACE_SCRIPTS / "export_html_package_to_markdown.py"),
             "--html",
             str(FINAL_HTML),
-            "--output-md",
-            str(FINAL_MD),
         ]
         if args.import_obsidian:
             markdown_cmd.append("--import-obsidian")

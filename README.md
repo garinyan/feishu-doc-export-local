@@ -277,9 +277,9 @@ python3 scripts/run_feishu_local_export.py \
 Markdown is generated from the verified offline HTML package, not from raw live DOM snapshots.
 
 - main Markdown:
-  - `exports/cdp-export/full-live-export-v2/document-v2.md`
+  - `exports/cdp-export/full-live-export-v2/<Document Title>.md`
 - localized Markdown assets:
-  - `exports/cdp-export/full-live-export-v2/document-v2.assets/`
+  - `exports/cdp-export/full-live-export-v2/<Document Title>.assets/`
 - optional Obsidian import destination:
   - `Imports/Feishu/<Document Title>.md`
   - `Imports/Feishu/<Document Title>.assets/`
@@ -301,8 +301,8 @@ The main result is written under:
 - `exports/cdp-export/full-live-export-v2/image-completeness-final.json`
 - `exports/cdp-export/full-live-export-v2/material-completeness-audit.json`
 - `exports/cdp-export/full-live-export-v2/material-manifest.json`
-- `exports/cdp-export/full-live-export-v2/document-v2.md`
-- `exports/cdp-export/full-live-export-v2/document-v2.assets/`
+- `exports/cdp-export/full-live-export-v2/<Document Title>.md`
+- `exports/cdp-export/full-live-export-v2/<Document Title>.assets/`
 
 辅助产物通常还包括：
 
