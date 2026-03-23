@@ -14,6 +14,8 @@ This file is the Codex/OpenAI adapter for the repository. The tool-agnostic work
 - The user cares about content completeness more than exact original runtime styling.
 - The user wants folded sections restored.
 - The user wants a local HTML package with images and a completeness audit.
+- The user wants a Markdown export derived from the verified local HTML package.
+- The user wants to continue importing the export into Obsidian as a note.
 - The user also cares about attachments such as PPT, video, HTML files, whiteboards, or interactive blocks not being dropped.
 
 ## Do Not Start Here
@@ -30,6 +32,8 @@ Preferred single entrypoint:
 - Use `scripts/run_feishu_local_export.py` from this skill when possible.
 - Example:
   - `python3 scripts/run_feishu_local_export.py --url 'https://example.invalid/embedded-feishu-link' --section 'Heading One' --section 'Heading Two'`
+  - `python3 scripts/run_feishu_local_export.py --url 'https://d16rg8unadx.feishu.cn/docx/EXAMPLE' --export-md`
+  - `python3 scripts/run_feishu_local_export.py --url 'https://d16rg8unadx.feishu.cn/docx/EXAMPLE' --export-md --import-obsidian`
 
 1. Use the user’s live Chrome tab via CDP.
 - Ask the user to start Chrome with `--remote-debugging-port=9222` only if needed.
@@ -101,6 +105,13 @@ Preferred single entrypoint:
 - Name the shareable file after the document title by default.
 - Keep the extension and only append a suffix when you must distinguish multiple variants.
 
+12. Export Markdown when needed.
+- Build Markdown from the verified HTML package, not from a raw DOM snapshot.
+- Use `scripts/export_html_package_to_markdown.py`.
+- Preserve local image assets into a sibling `.assets/` directory.
+- If the user wants Obsidian import, copy the generated Markdown package into the selected vault after Markdown generation.
+- Treat Markdown/Obsidian export as a second-stage delivery derived from the already-verified HTML package.
+
 ## Output Standard
 
 Deliver a local folder that contains:
@@ -120,6 +131,15 @@ Optional shareable artifact:
 
 - Single-file HTML:
   - title-based filename such as `Document Title.html`
+
+Optional Markdown artifacts:
+
+- Markdown package:
+  - `exports/cdp-export/full-live-export-v2/document-v2.md`
+  - `exports/cdp-export/full-live-export-v2/document-v2.assets/`
+- Optional Obsidian import:
+  - `Imports/Feishu/<Document Title>.md`
+  - `Imports/Feishu/<Document Title>.assets/`
 
 ## Validation Rules
 
@@ -156,6 +176,8 @@ These are acceptable only after content completeness is verified:
 - Treating every clientvar `image` block as a recoverable original asset: some are only empty placeholders.
 - Treating a clean rerun as fully self-contained: earlier exports may already contain valid localized originals that should be reconciled by block id.
 - Producing a shareable single-file artifact without browser verification: the file may exist but still fail to render or load embedded media correctly.
+- Producing Markdown directly from raw live DOM or clientvar text only: this tends to drop localized image assets and readable block structure.
+- Importing into Obsidian before verifying the Markdown package: broken asset links become harder to diagnose once copied into the vault.
 
 ## Important Files
 
@@ -184,6 +206,8 @@ These are acceptable only after content completeness is verified:
   - `scripts/audit_image_completeness.py`
 - Material completeness audit:
   - `scripts/audit_material_completeness.py`
+- HTML package to Markdown:
+  - `scripts/export_html_package_to_markdown.py`
 - Browser verification:
   - `scripts/verify_v2_sections_in_chrome_cdp.mjs`
 

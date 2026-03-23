@@ -65,6 +65,8 @@
 
 - If the user needs to send the result through IM, generate a single-file HTML by inlining local images.
 - Verify the single-file HTML in Chrome after generation.
+- If the user needs Markdown or Obsidian delivery, generate Markdown from the verified HTML package, not from raw DOM snapshots.
+- If importing into Obsidian, verify the Markdown package before copying it into the vault.
 - Name the shareable file after the document title by default.
 - Only append a suffix when needed to distinguish variants such as single-file, PDF, or debug builds.
 

@@ -52,9 +52,27 @@ python3 scripts/run_feishu_local_export.py \
   --section 'Heading Two'
 ```
 
+导出 Markdown：
+
+```bash
+python3 scripts/run_feishu_local_export.py \
+  --url 'https://d16rg8unadx.feishu.cn/docx/EXAMPLE' \
+  --export-md
+```
+
+导出 Markdown 并导入 Obsidian：
+
+```bash
+python3 scripts/run_feishu_local_export.py \
+  --url 'https://d16rg8unadx.feishu.cn/docx/EXAMPLE' \
+  --export-md \
+  --import-obsidian
+```
+
 ## 关键文件
 
 - `scripts/run_feishu_local_export.py`
+- `scripts/export_html_package_to_markdown.py`
 - `scripts/preprocess_feishu_live_page.mjs`
 - `scripts/export_feishu_full_live.mjs`
 - `scripts/export_feishu_live_structured_html.mjs`

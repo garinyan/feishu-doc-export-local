@@ -196,6 +196,34 @@ python3 scripts/run_feishu_local_export.py \
   --section 'Heading Two'
 ```
 
+Export Markdown from a direct Feishu link or wrapper link:
+
+```bash
+python3 scripts/run_feishu_local_export.py \
+  --url 'https://d16rg8unadx.feishu.cn/docx/EXAMPLE' \
+  --export-md
+```
+
+Export Markdown and continue importing it into Obsidian:
+
+```bash
+python3 scripts/run_feishu_local_export.py \
+  --url 'https://d16rg8unadx.feishu.cn/docx/EXAMPLE' \
+  --export-md \
+  --import-obsidian
+```
+
+Use a specific vault or target subfolder if needed:
+
+```bash
+python3 scripts/run_feishu_local_export.py \
+  --url 'https://d16rg8unadx.feishu.cn/docx/EXAMPLE' \
+  --export-md \
+  --import-obsidian \
+  --obsidian-vault '/path/to/Your Vault' \
+  --obsidian-subdir 'Imports/Feishu'
+```
+
 运行后会依次做这些事：
 
 1. 先在 live 页面做预处理，触发懒加载并尽量展开折叠内容
@@ -209,6 +237,7 @@ python3 scripts/run_feishu_local_export.py \
 9. 单独核对图片完整性
 10. 单独核对素材完整性，覆盖 PPT / 视频 / HTML 附件 / 互动卡片 / 白板
 11. 在 Chrome 里打开并验证结果
+12. 如有需要，从已验证 HTML 包生成 Markdown，并可选导入 Obsidian
 
 补图链路的经验：
 
@@ -243,6 +272,25 @@ python3 scripts/run_feishu_local_export.py \
 - `AI编程产品出海（含OpenClaw）实战手册.html`
 - `AI编程产品出海（含OpenClaw）实战手册.pdf`
 
+## Export Markdown And Import Into Obsidian
+
+Markdown is generated from the verified offline HTML package, not from raw live DOM snapshots.
+
+- main Markdown:
+  - `exports/cdp-export/full-live-export-v2/document-v2.md`
+- localized Markdown assets:
+  - `exports/cdp-export/full-live-export-v2/document-v2.assets/`
+- optional Obsidian import destination:
+  - `Imports/Feishu/<Document Title>.md`
+  - `Imports/Feishu/<Document Title>.assets/`
+
+Why this route is safer:
+
+- it reuses the already-verified HTML package
+- localized images stay attached to the Markdown export
+- Obsidian import works from the Markdown package, not from a fragile live HTML snapshot
+- direct Feishu links are supported the same way as wrapper links, as long as the target page is the loaded CDP tab
+
 ## Output
 
 The main result is written under:
@@ -253,6 +301,8 @@ The main result is written under:
 - `exports/cdp-export/full-live-export-v2/image-completeness-final.json`
 - `exports/cdp-export/full-live-export-v2/material-completeness-audit.json`
 - `exports/cdp-export/full-live-export-v2/material-manifest.json`
+- `exports/cdp-export/full-live-export-v2/document-v2.md`
+- `exports/cdp-export/full-live-export-v2/document-v2.assets/`
 
 辅助产物通常还包括：
 

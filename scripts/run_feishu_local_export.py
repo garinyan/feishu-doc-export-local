@@ -10,6 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_SCRIPTS = REPO_ROOT / "scripts"
 EXPORT_ROOT = REPO_ROOT / "exports" / "cdp-export"
 FINAL_HTML = EXPORT_ROOT / "full-live-export-v2" / "document-v2.html"
+FINAL_MD = EXPORT_ROOT / "full-live-export-v2" / "document-v2.md"
 AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "content-completeness-audit.json"
 IMAGE_AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "image-completeness-final.json"
 MATERIAL_AUDIT_JSON = EXPORT_ROOT / "full-live-export-v2" / "material-completeness-audit.json"
@@ -51,6 +52,25 @@ def main() -> None:
         action="store_true",
         help="Do not open the final HTML after export.",
     )
+    parser.add_argument(
+        "--export-md",
+        action="store_true",
+        help="Also convert the final HTML package into a Markdown package.",
+    )
+    parser.add_argument(
+        "--import-obsidian",
+        action="store_true",
+        help="After Markdown export, copy the Markdown package into an Obsidian vault.",
+    )
+    parser.add_argument(
+        "--obsidian-vault",
+        help="Explicit Obsidian vault path. Defaults to the currently open vault from obsidian.json.",
+    )
+    parser.add_argument(
+        "--obsidian-subdir",
+        default="Imports/Feishu",
+        help="Relative folder inside the Obsidian vault when using --import-obsidian.",
+    )
     args = parser.parse_args()
 
     env = build_env(args)
@@ -67,16 +87,49 @@ def main() -> None:
     run(["python3", str(WORKSPACE_SCRIPTS / "audit_image_completeness.py")], env)
     run(["python3", str(WORKSPACE_SCRIPTS / "audit_material_completeness.py")], env)
     run(["node", str(WORKSPACE_SCRIPTS / "verify_v2_sections_in_chrome_cdp.mjs")], env)
+    markdown_path = None
+    obsidian_note = None
+    obsidian_uri = None
+    if args.export_md or args.import_obsidian:
+        markdown_cmd = [
+            "python3",
+            str(WORKSPACE_SCRIPTS / "export_html_package_to_markdown.py"),
+            "--html",
+            str(FINAL_HTML),
+            "--output-md",
+            str(FINAL_MD),
+        ]
+        if args.import_obsidian:
+            markdown_cmd.append("--import-obsidian")
+            if args.obsidian_vault:
+                markdown_cmd.extend(["--obsidian-vault", args.obsidian_vault])
+            if args.obsidian_subdir:
+                markdown_cmd.extend(["--obsidian-subdir", args.obsidian_subdir])
+        output = subprocess.run(
+            markdown_cmd,
+            check=True,
+            cwd=REPO_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        payload = json.loads(output.stdout)
+        markdown_path = payload.get("markdown")
+        obsidian_note = payload.get("obsidian_note")
+        obsidian_uri = payload.get("obsidian_uri")
     if not args.skip_open:
-        run(["open", str(FINAL_HTML)], env)
+        run(["open", obsidian_uri or obsidian_note or markdown_path or str(FINAL_HTML)], env)
 
     print(
         json.dumps(
             {
                 "final_html": str(FINAL_HTML),
+                "final_markdown": markdown_path,
                 "audit": str(AUDIT_JSON),
                 "image_audit": str(IMAGE_AUDIT_JSON),
                 "material_audit": str(MATERIAL_AUDIT_JSON),
+                "obsidian_note": obsidian_note,
+                "obsidian_uri": obsidian_uri,
                 "url": args.url,
                 "sections": args.sections,
             },
