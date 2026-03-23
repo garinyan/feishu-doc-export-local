@@ -49,6 +49,8 @@ missing_sections = (
     if missing_sections_path.exists()
     else {}
 )
+source_context_path = WORK_DIR / "source-context.json"
+source_context = load_json(source_context_path) if source_context_path.exists() else {}
 
 
 def normalize_asset_name(value: str) -> str:
@@ -454,6 +456,26 @@ nav_html = "".join(
     for level, block_id, text in nav_items
     if text
 )
+source_links = []
+if source_context.get("wrapperUrl"):
+    source_links.append(
+        f'<a href="{esc(source_context["wrapperUrl"])}" target="_blank" rel="noreferrer">包装页原始链接</a>'
+    )
+if source_context.get("feishuCanonicalUrl"):
+    source_links.append(
+        f'<a href="{esc(source_context["feishuCanonicalUrl"])}" target="_blank" rel="noreferrer">飞书原始链接</a>'
+    )
+elif source_context.get("feishuFrameUrl"):
+    source_links.append(
+        f'<a href="{esc(source_context["feishuFrameUrl"])}" target="_blank" rel="noreferrer">飞书嵌入链接</a>'
+    )
+source_meta_html = ""
+if source_links:
+    source_meta_html = (
+        '<section class="source-links"><div class="source-links-label">来源</div><div class="source-links-row">'
+        + "".join(source_links)
+        + "</div></section>"
+    )
 
 html = f"""<!doctype html>
 <html>
@@ -477,6 +499,11 @@ html = f"""<!doctype html>
     .content{{max-width:940px;min-width:0;flex:1;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:28px 38px;box-shadow:0 10px 30px rgba(54,42,18,.05)}}
     h1,h2,h3,h4,h5{{margin-top:30px;line-height:1.3;scroll-margin-top:24px}}
     h1{{font-size:34px;letter-spacing:-.02em}}
+    .source-links{{margin:10px 0 24px;padding:12px 14px;border:1px solid #e4d8c4;border-radius:14px;background:#faf5ea}}
+    .source-links-label{{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}}
+    .source-links-row{{display:flex;flex-wrap:wrap;gap:10px 14px}}
+    .source-links a{{color:#8b5a00;text-decoration:none;font-weight:600;word-break:break-all}}
+    .source-links a:hover{{text-decoration:underline}}
     h2{{font-size:24px;padding-top:12px;border-top:1px solid #f1eadf}}
     h3{{font-size:20px}}
     h4{{font-size:17px;color:#3e382f}}
@@ -531,6 +558,7 @@ html = f"""<!doctype html>
     </aside>
     <main class="content">
       <h1>AI编程产品出海（含OpenClaw）实战手册</h1>
+      {source_meta_html}
       {''.join(html_parts)}
     </main>
   </div>

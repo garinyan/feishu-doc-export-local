@@ -5,6 +5,7 @@ import { chromium } from "playwright";
 const TARGET_URL =
   process.env.FEISHU_EXPORT_TARGET_URL || "";
 const OUT_DIR = path.resolve("exports", "cdp-export", "structured-live-export");
+const WORK_DIR = path.resolve("exports", "cdp-export", "v2-work");
 const IMAGE_DIR = path.resolve("exports", "cdp-export", "full-live-export", "images");
 const MAX_ROUNDS = Number(process.env.FEISHU_EXPORT_MAX_ROUNDS || 180);
 
@@ -18,6 +19,7 @@ async function findPage(browser) {
 }
 
 await fs.mkdir(OUT_DIR, { recursive: true });
+await fs.mkdir(WORK_DIR, { recursive: true });
 const imageFiles = await fs.readdir(IMAGE_DIR);
 const imageMap = new Map(
   imageFiles
@@ -113,8 +115,21 @@ const summary = {
   imageBlocks: ordered.filter((b) => b.type === "image").length,
   tableBlocks: ordered.filter((b) => b.type === "table").length,
 };
+const frameUrl = frame.url();
+let feishuCanonicalUrl = frameUrl;
+try {
+  const parsed = new URL(frameUrl);
+  feishuCanonicalUrl = `${parsed.origin}${parsed.pathname}`;
+} catch {}
+const sourceContext = {
+  wrapperUrl: page.url(),
+  feishuFrameUrl: frameUrl,
+  feishuCanonicalUrl,
+  title: meta.title,
+};
 
 await fs.writeFile(path.join(OUT_DIR, "document-structured.html"), html, "utf8");
 await fs.writeFile(path.join(OUT_DIR, "summary.json"), JSON.stringify(summary, null, 2), "utf8");
+await fs.writeFile(path.join(WORK_DIR, "source-context.json"), JSON.stringify(sourceContext, null, 2), "utf8");
 console.log(JSON.stringify(summary, null, 2));
 await browser.close();
